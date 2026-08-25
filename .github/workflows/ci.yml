@@ -175,15 +175,17 @@ jobs:
             command: yarn install --foreground-scripts
             timeout_minutes: 10
             on_retry_command: rm -rfv node_modules
-        # secrets is not allowed in step `if:` on reusable workflows (workflow_call),
-        # so gate on env vars inside the script. Missing secrets → unsigned build.
+        # secrets is not allowed in step `if:` on reusable workflows (workflow_call).
+        # P12, password, and identity are one signing set: export OSX_SIGN_IDENTITY
+        # only when all three are present so Forge cannot sign with a partial config.
         - name: Import signing certificate
           env:
             MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
             MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+            MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
           run: |
-            if [ -z "$MACOS_CERT_P12" ]; then
-              echo "No MACOS_CERT_P12 secret; building unsigned."
+            if [ -z "$MACOS_CERT_P12" ] || [ -z "$MACOS_CERT_PASSWORD" ] || [ -z "$MACOS_SIGN_IDENTITY" ]; then
+              echo "Incomplete signing secrets (need MACOS_CERT_P12, MACOS_CERT_PASSWORD, MACOS_SIGN_IDENTITY); building unsigned."
               exit 0
             fi
             KEYCHAIN=$RUNNER_TEMP/build.keychain-db
@@ -196,6 +198,7 @@ jobs:
             security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
             security list-keychains -d user -s "$KEYCHAIN" login.keychain
             rm $RUNNER_TEMP/cert.p12
+            echo "OSX_SIGN_IDENTITY=$MACOS_SIGN_IDENTITY" >> "$GITHUB_ENV"
         - name: Write notarization API key
           env:
             APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
@@ -210,7 +213,6 @@ jobs:
         - name: Build MacOS arm64
           env:
             NODE_OPTIONS: --max-old-space-size=4096
-            OSX_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
             APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
             APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
@@ -218,7 +220,6 @@ jobs:
             test -d "out/INAV Configurator-darwin-arm64/INAV Configurator.app"
         - name: Verify signing and notarization
           env:
-            OSX_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
             APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
             APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
@@ -280,15 +281,17 @@ jobs:
             command: yarn install --foreground-scripts
             timeout_minutes: 10
             on_retry_command: rm -rfv node_modules
-        # secrets is not allowed in step `if:` on reusable workflows (workflow_call),
-        # so gate on env vars inside the script. Missing secrets → unsigned build.
+        # secrets is not allowed in step `if:` on reusable workflows (workflow_call).
+        # P12, password, and identity are one signing set: export OSX_SIGN_IDENTITY
+        # only when all three are present so Forge cannot sign with a partial config.
         - name: Import signing certificate
           env:
             MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
             MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+            MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
           run: |
-            if [ -z "$MACOS_CERT_P12" ]; then
-              echo "No MACOS_CERT_P12 secret; building unsigned."
+            if [ -z "$MACOS_CERT_P12" ] || [ -z "$MACOS_CERT_PASSWORD" ] || [ -z "$MACOS_SIGN_IDENTITY" ]; then
+              echo "Incomplete signing secrets (need MACOS_CERT_P12, MACOS_CERT_PASSWORD, MACOS_SIGN_IDENTITY); building unsigned."
               exit 0
             fi
             KEYCHAIN=$RUNNER_TEMP/build.keychain-db
@@ -301,6 +304,7 @@ jobs:
             security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
             security list-keychains -d user -s "$KEYCHAIN" login.keychain
             rm $RUNNER_TEMP/cert.p12
+            echo "OSX_SIGN_IDENTITY=$MACOS_SIGN_IDENTITY" >> "$GITHUB_ENV"
         - name: Write notarization API key
           env:
             APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
@@ -315,7 +319,6 @@ jobs:
         - name: Build MacOS x64
           env:
             NODE_OPTIONS: --max-old-space-size=4096
-            OSX_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
             APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
             APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
@@ -323,7 +326,6 @@ jobs:
             test -d "out/INAV Configurator-darwin-x64/INAV Configurator.app"
         - name: Verify signing and notarization
           env:
-            OSX_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
             APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
             APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |

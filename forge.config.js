@@ -66,6 +66,8 @@ const pruneSitlBinaries = (stagingPath, electronVersion, platform, arch, done) =
 // macOS code signing and notarization are opt-in via environment variables so
 // unsigned development and fork-PR builds keep working without credentials.
 // - OSX_SIGN_IDENTITY: "Developer ID Application: Name (TEAMID)" enables signing.
+//   CI only exports this when MACOS_CERT_P12, MACOS_CERT_PASSWORD, and
+//   MACOS_SIGN_IDENTITY are all set; a partial set leaves it unset.
 // - Notarization (requires signing) uses either an App Store Connect API key
 //   (APPLE_API_KEY path + APPLE_API_KEY_ID + APPLE_API_ISSUER, suited to CI) or
 //   a local notarytool keychain profile (APPLE_KEYCHAIN_PROFILE).
