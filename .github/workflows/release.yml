@@ -42,6 +42,10 @@ jobs:
           VERSION="${TAG#v}"
           PREV="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
           {
+            echo '![INAV Configurator](https://quadmeup.com/assets/winged-inav.png)'
+            echo
+            echo "# INAV Configurator ${VERSION}"
+            echo
             cat RELEASE_NOTES.md
             echo
             echo "---"
