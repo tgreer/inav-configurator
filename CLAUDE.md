@@ -105,7 +105,7 @@ Signing is opt-in. Without credentials, `yarn make` produces an unsigned app.
 |---|---|---|
 | Pull request CI (`ci.yml` on `pull_request`) | No | No |
 | Fork PRs | No | No |
-| Official tagged release (`release.yml` on `v*.*.*`) | **Yes** (required) | **Yes** (required) |
+| Official tagged release (`release.yml` on `9.1.3` / `v9.1.3`) | **Yes** (required) | **Yes** (required) |
 | Nightly (`nightly-build.yml` on `master` or `maintenance-8.x.x`) | Yes, if the full signing secret set is present | Yes, if the full API-key set is also present |
 | Local `yarn make` | Yes, if `OSX_SIGN_IDENTITY` is set | Yes, if a complete notarization method is also set |
 
@@ -126,22 +126,22 @@ Notarization can also use an App Store Connect API key (`APPLE_API_KEY` path + `
 
 ### GitHub Actions secrets (nightlies and official releases)
 
-All six are required for a signed **and** notarized build. Signing needs the first three together; notarization needs the last three together. Official tagged releases (`v*.*.*`) **fail** if either set is incomplete. Nightlies fall back to unsigned / signed-only.
+All six are required for a signed **and** notarized build. Signing needs the first three together; notarization needs the last three together. Official tagged releases (`9.1.3` or `v9.1.3`) **fail** if either set is incomplete. Nightlies fall back to unsigned / signed-only.
 
 - `MACOS_CERT_P12`, `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`
 - `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`
 
 See the macOS jobs in `.github/workflows/ci.yml`.
 
-### Cutting an official release (e.g. v9.1.2)
+### Cutting an official release (e.g. 9.1.3)
 
-1. Bump `"version"` in `package.json` on the maintenance branch and merge that PR (PR CI stays unsigned).
-2. Tag the merge commit and push it:
+1. On the maintenance branch, bump `"version"` in `package.json` and merge that PR (PR CI stays unsigned).
+2. Tag the merge commit to match historical tags (`9.1.3`) or with a `v` prefix (`v9.1.3`):
    ```bash
-   git tag v9.1.2
-   git push origin v9.1.2
+   git tag 9.1.3
+   git push origin 9.1.3
    ```
-3. `.github/workflows/release.yml` builds every platform, requires signed+notarized macOS, and publishes a GitHub Release on this repo.
+3. `.github/workflows/release.yml` builds every platform and requires signed+notarized macOS. Download the workflow artifacts, then create the GitHub Release by hand in the same style as [9.1.1](https://github.com/iNavFlight/inav-configurator/releases/tag/9.1.1).
 
 Verify a notarized build with:
 

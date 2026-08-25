@@ -1,8 +1,8 @@
 name: Build Configurator
 # Don't enable CI on push, just on PR. If you
 # are working on the main repo and want to trigger
-# a CI build submit a draft PR. Official signed
-# releases are built by .github/workflows/release.yml on v*.*.* tags.
+# a CI build submit a draft PR. Signed tagged builds
+# are produced by .github/workflows/release.yml.
 on: 
   pull_request:
 
