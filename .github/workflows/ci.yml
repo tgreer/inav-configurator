@@ -242,7 +242,7 @@ jobs:
             yarn run package -- --arch="arm64"
             test -d "out/INAV Configurator-darwin-arm64/INAV Configurator.app"
         - name: Make MacOS arm64 distributables
-          uses: nick-fields/retry@v3
+          uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
           with:
             max_attempts: 3
             retry_on: error
@@ -383,7 +383,7 @@ jobs:
             yarn run package -- --arch="x64"
             test -d "out/INAV Configurator-darwin-x64/INAV Configurator.app"
         - name: Make MacOS x64 distributables
-          uses: nick-fields/retry@v3
+          uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
           with:
             max_attempts: 3
             retry_on: error

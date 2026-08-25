@@ -155,7 +155,7 @@ export default {
       }
       for (const vol of ['/Volumes/INAV-Configurator', '/Volumes/INAV Configurator']) {
         try {
-          execFileSync('hdiutil', ['detach', vol, '-force'], { stdio: 'ignore' });
+          execFileSync('/usr/bin/hdiutil', ['detach', vol, '-force'], { stdio: 'ignore' });
         } catch {
           // Volume was not mounted.
         }
