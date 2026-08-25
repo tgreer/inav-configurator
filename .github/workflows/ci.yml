@@ -175,10 +175,13 @@ jobs:
             command: yarn install --foreground-scripts
             timeout_minutes: 10
             on_retry_command: rm -rfv node_modules
-        # secrets is not allowed in step `if:` on reusable workflows (workflow_call).
+        # Signing credentials must never be imported on pull_request: yarn make
+        # loads the checked-out forge.config.js. Same-repo PRs receive secrets.
+        # Nightly/protected push (workflow_call) is the trusted signing path.
         # P12, password, and identity are one signing set: export OSX_SIGN_IDENTITY
         # only when all three are present so Forge cannot sign with a partial config.
         - name: Import signing certificate
+          if: github.event_name != 'pull_request'
           env:
             MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
             MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
@@ -200,28 +203,29 @@ jobs:
             rm $RUNNER_TEMP/cert.p12
             echo "OSX_SIGN_IDENTITY=$MACOS_SIGN_IDENTITY" >> "$GITHUB_ENV"
         - name: Write notarization API key
+          if: github.event_name != 'pull_request'
           env:
             APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
-            if [ -z "$APPLE_API_KEY_P8" ]; then
-              echo "No APPLE_API_KEY_P8 secret; skipping notarization key."
+            if [ -z "$APPLE_API_KEY_P8" ] || [ -z "$APPLE_API_KEY_ID" ] || [ -z "$APPLE_API_ISSUER" ]; then
+              echo "Incomplete notarization secrets; skipping notarization key."
               exit 0
             fi
             KEY_PATH="$RUNNER_TEMP/apple_api_key.p8"
             echo "$APPLE_API_KEY_P8" > "$KEY_PATH"
             echo "APPLE_API_KEY=$KEY_PATH" >> "$GITHUB_ENV"
+            echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID" >> "$GITHUB_ENV"
+            echo "APPLE_API_ISSUER=$APPLE_API_ISSUER" >> "$GITHUB_ENV"
         - name: Build MacOS arm64
           env:
             NODE_OPTIONS: --max-old-space-size=4096
-            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
             yarn run make -- --arch="arm64"
             test -d "out/INAV Configurator-darwin-arm64/INAV Configurator.app"
         - name: Verify signing and notarization
-          env:
-            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          if: github.event_name != 'pull_request'
           run: |
             APP="out/INAV Configurator-darwin-arm64/INAV Configurator.app"
             if [ -z "$OSX_SIGN_IDENTITY" ]; then
@@ -281,10 +285,13 @@ jobs:
             command: yarn install --foreground-scripts
             timeout_minutes: 10
             on_retry_command: rm -rfv node_modules
-        # secrets is not allowed in step `if:` on reusable workflows (workflow_call).
+        # Signing credentials must never be imported on pull_request: yarn make
+        # loads the checked-out forge.config.js. Same-repo PRs receive secrets.
+        # Nightly/protected push (workflow_call) is the trusted signing path.
         # P12, password, and identity are one signing set: export OSX_SIGN_IDENTITY
         # only when all three are present so Forge cannot sign with a partial config.
         - name: Import signing certificate
+          if: github.event_name != 'pull_request'
           env:
             MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
             MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
@@ -306,28 +313,29 @@ jobs:
             rm $RUNNER_TEMP/cert.p12
             echo "OSX_SIGN_IDENTITY=$MACOS_SIGN_IDENTITY" >> "$GITHUB_ENV"
         - name: Write notarization API key
+          if: github.event_name != 'pull_request'
           env:
             APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
-            if [ -z "$APPLE_API_KEY_P8" ]; then
-              echo "No APPLE_API_KEY_P8 secret; skipping notarization key."
+            if [ -z "$APPLE_API_KEY_P8" ] || [ -z "$APPLE_API_KEY_ID" ] || [ -z "$APPLE_API_ISSUER" ]; then
+              echo "Incomplete notarization secrets; skipping notarization key."
               exit 0
             fi
             KEY_PATH="$RUNNER_TEMP/apple_api_key.p8"
             echo "$APPLE_API_KEY_P8" > "$KEY_PATH"
             echo "APPLE_API_KEY=$KEY_PATH" >> "$GITHUB_ENV"
+            echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID" >> "$GITHUB_ENV"
+            echo "APPLE_API_ISSUER=$APPLE_API_ISSUER" >> "$GITHUB_ENV"
         - name: Build MacOS x64
           env:
             NODE_OPTIONS: --max-old-space-size=4096
-            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           run: |
             yarn run make -- --arch="x64"
             test -d "out/INAV Configurator-darwin-x64/INAV Configurator.app"
         - name: Verify signing and notarization
-          env:
-            APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-            APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          if: github.event_name != 'pull_request'
           run: |
             APP="out/INAV Configurator-darwin-x64/INAV Configurator.app"
             if [ -z "$OSX_SIGN_IDENTITY" ]; then

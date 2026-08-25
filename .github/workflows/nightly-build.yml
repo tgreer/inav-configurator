@@ -10,6 +10,8 @@ on:
 jobs:
     build:
         name: build
+        # Trusted path only: this workflow runs on push to protected branches,
+        # not on pull_request. secrets: inherit is what enables signed nightlies.
         uses: ./.github/workflows/ci.yml
         secrets: inherit
     
