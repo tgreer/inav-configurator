@@ -69,14 +69,23 @@ const pruneSitlBinaries = (stagingPath, electronVersion, platform, arch, done) =
 // - Notarization (requires signing) uses either an App Store Connect API key
 //   (APPLE_API_KEY path + APPLE_API_KEY_ID + APPLE_API_ISSUER, suited to CI) or
 //   a local notarytool keychain profile (APPLE_KEYCHAIN_PROFILE).
+//   A partial API-key set falls back to signed-only instead of failing the packager.
 const osxSign = process.env.OSX_SIGN_IDENTITY
   ? { identity: process.env.OSX_SIGN_IDENTITY }
   : undefined;
 
+const appleApiKey = process.env.APPLE_API_KEY;
+const hasApiKeyNotarize = Boolean(
+  appleApiKey &&
+  process.env.APPLE_API_KEY_ID &&
+  process.env.APPLE_API_ISSUER &&
+  fs.existsSync(appleApiKey)
+);
+
 let osxNotarize;
-if (osxSign && process.env.APPLE_API_KEY_ID) {
+if (osxSign && hasApiKeyNotarize) {
   osxNotarize = {
-    appleApiKey: process.env.APPLE_API_KEY,
+    appleApiKey,
     appleApiKeyId: process.env.APPLE_API_KEY_ID,
     appleApiIssuer: process.env.APPLE_API_ISSUER,
   };
