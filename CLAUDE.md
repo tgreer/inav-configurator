@@ -97,8 +97,23 @@ MSP.send_message(MSPCodes.MSP_SOME_CODE, payload, false, () => {
 
 ## macOS Code Signing & Notarization
 
-Signing is opt-in via environment variables (see `forge.config.js`); without
-them, builds are unsigned. For a signed + notarized local release build:
+Signing is opt-in. Without credentials, `yarn make` produces an unsigned app.
+
+### What gets signed
+
+| Build | Signed | Notarized |
+|---|---|---|
+| Pull request CI (`ci.yml` on `pull_request`) | No | No |
+| Fork PRs | No | No |
+| Official tagged release (`release.yml` on `v*.*.*`) | **Yes** (required) | **Yes** (required) |
+| Nightly (`nightly-build.yml` on `master` or `maintenance-8.x.x`) | Yes, if the full signing secret set is present | Yes, if the full API-key set is also present |
+| Local `yarn make` | Yes, if `OSX_SIGN_IDENTITY` is set | Yes, if a complete notarization method is also set |
+
+A **partial** signing set (P12, password, or identity missing) stays unsigned. A **partial** notarization set (API key file, key id, or issuer missing) stays signed-only; packaging does not fail.
+
+PR jobs never import certs or API keys. `yarn make` loads the checked-out `forge.config.js`, so same-repo PRs must not see those secrets.
+
+### Local release build (signed + notarized)
 
 ```bash
 export OSX_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
@@ -107,12 +122,28 @@ yarn make --platform darwin --arch arm64
 yarn make --platform darwin --arch x64
 ```
 
-CI signs automatically when the repo secrets are configured (`MACOS_CERT_P12`,
-`MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`, `APPLE_API_KEY_P8`,
-`APPLE_API_KEY_ID`, `APPLE_API_ISSUER`) — see the macOS jobs in
-`.github/workflows/ci.yml`. Fork PRs without secrets build unsigned.
+Notarization can also use an App Store Connect API key (`APPLE_API_KEY` path + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`) instead of a keychain profile.
 
-Verify a build with:
+### GitHub Actions secrets (nightlies and official releases)
+
+All six are required for a signed **and** notarized build. Signing needs the first three together; notarization needs the last three together. Official tagged releases (`v*.*.*`) **fail** if either set is incomplete. Nightlies fall back to unsigned / signed-only.
+
+- `MACOS_CERT_P12`, `MACOS_CERT_PASSWORD`, `MACOS_SIGN_IDENTITY`
+- `APPLE_API_KEY_P8`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`
+
+See the macOS jobs in `.github/workflows/ci.yml`.
+
+### Cutting an official release (e.g. v9.1.2)
+
+1. Bump `"version"` in `package.json` on the maintenance branch and merge that PR (PR CI stays unsigned).
+2. Tag the merge commit and push it:
+   ```bash
+   git tag v9.1.2
+   git push origin v9.1.2
+   ```
+3. `.github/workflows/release.yml` builds every platform, requires signed+notarized macOS, and publishes a GitHub Release on this repo.
+
+Verify a notarized build with:
 
 ```bash
 xcrun stapler validate "out/INAV Configurator-darwin-arm64/INAV Configurator.app"

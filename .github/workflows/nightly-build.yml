@@ -55,7 +55,9 @@ jobs:
 
                   ### MacOS builds
 
-                  MacOS builds are not signed, so you will need to run ```xattr -cr /path/to/your/INAV Configurator.app``` from the command line to remove the warnings about it being a downloaded application or moving it to trash when trying to launch.
+                  Nightly macOS builds from protected-branch pushes are signed and notarized when the repo has Apple credentials configured. Pull-request CI builds are always unsigned.
+
+                  If Gatekeeper blocks an unsigned app, run ```xattr -cr /path/to/your/INAV Configurator.app``` from the command line.
       
                   ### Repository:
                   ${{ github.repository }} ([link](${{ github.event.repository.html_url }}))
