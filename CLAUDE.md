@@ -135,13 +135,13 @@ See the macOS jobs in `.github/workflows/ci.yml`.
 
 ### Cutting an official release (e.g. 9.1.3)
 
-1. On the maintenance branch, bump `"version"` in `package.json` and merge that PR (PR CI stays unsigned).
+1. On the maintenance branch, bump `"version"` in `package.json` **and rewrite `RELEASE_NOTES.md`** in the same style as [9.1.1](https://github.com/iNavFlight/inav-configurator/releases/tag/9.1.1) (intro, Fixes, Highlights, Localization, firmware link). Merge that PR (PR CI stays unsigned).
 2. Tag the merge commit to match historical tags (`9.1.3`) or with a `v` prefix (`v9.1.3`):
    ```bash
    git tag 9.1.3
    git push origin 9.1.3
    ```
-3. `.github/workflows/release.yml` builds every platform and requires signed+notarized macOS. Download the workflow artifacts, then create the GitHub Release by hand in the same style as [9.1.1](https://github.com/iNavFlight/inav-configurator/releases/tag/9.1.1).
+3. `.github/workflows/release.yml` builds every platform, requires signed+notarized macOS, and publishes a GitHub Release whose body is `RELEASE_NOTES.md` (plus a signing line and compare link).
 
 Verify a notarized build with:
 

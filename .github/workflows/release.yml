@@ -1,8 +1,9 @@
 name: Release
 
-# Tagged version builds. Tag a merged version bump (e.g. 9.1.3 or v9.1.3) to
-# produce signed + notarized macOS artifacts. GitHub Release creation stays
-# manual — download the workflow artifacts and attach them in the UI.
+# Official GitHub Releases. Tag a merged version bump (e.g. 9.1.3 or v9.1.3)
+# to build signed + notarized macOS artifacts and publish them on this repo.
+# Release body comes from RELEASE_NOTES.md on the tagged commit (same style as
+# https://github.com/iNavFlight/inav-configurator/releases/tag/9.1.1).
 on:
   push:
     tags:
@@ -16,3 +17,51 @@ jobs:
     secrets: inherit
     with:
       require_signing: true
+
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Assemble release notes
+        env:
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          test -s RELEASE_NOTES.md
+          VERSION="${TAG#v}"
+          PREV="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+          {
+            cat RELEASE_NOTES.md
+            echo
+            echo "---"
+            echo
+            echo "macOS builds in this release are signed and notarized with a Developer ID certificate."
+            if [ -n "$PREV" ]; then
+              echo
+              echo "**Full Changelog:** https://github.com/${REPO}/compare/${PREV}...${TAG}"
+            fi
+          } > "$RUNNER_TEMP/release-body.md"
+          echo "RELEASE_NAME=INAV Configurator ${VERSION}" >> "$GITHUB_ENV"
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ env.RELEASE_NAME }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          make_latest: true
+          body_path: ${{ runner.temp }}/release-body.md
+          files: |
+            artifacts/*
