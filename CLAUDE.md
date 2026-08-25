@@ -156,7 +156,7 @@ spctl --assess --type execute -v "out/INAV Configurator-darwin-arm64/INAV Config
 - **Never run two macOS builds concurrently on one machine.** `@electron/packager`
   wipes its shared temp dir (`$TMPDIR/electron-packager`) at the start of every
   run — deleting the other build's staged app while it waits on Apple — and the
-  DMG maker writes to a fixed intermediate path (`out/make/INAV Configurator.dmg`).
+  DMG maker writes to a fixed intermediate path (`out/make/INAV-Configurator.dmg`).
   Run architectures sequentially, or isolate each with its own `TMPDIR`.
 - **Files must not be deleted from the bundle after signing.** SITL pruning runs
   in the `afterCopyExtraResources` hook (before signing) for this reason; moving

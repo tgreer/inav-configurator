@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -146,6 +147,20 @@ export default {
     },
   ],
   hooks: {
+    // appdmg sometimes unmounts the temp volume and then fails hdiutil detach
+    // ("No such file or directory"). Clear leftovers before makers run.
+    preMake: async () => {
+      if (process.platform !== 'darwin') {
+        return;
+      }
+      for (const vol of ['/Volumes/INAV-Configurator', '/Volumes/INAV Configurator']) {
+        try {
+          execFileSync('hdiutil', ['detach', vol, '-force'], { stdio: 'ignore' });
+        } catch {
+          // Volume was not mounted.
+        }
+      }
+    },
     // Uniform artifact file names
     postMake: async (config, makeResults) => {
       makeResults.forEach(result => {
@@ -201,8 +216,10 @@ export default {
     {
       name: '@electron-forge/maker-dmg',
       config: {
-        name: "INAV Configurator",
-        title: "INAV-Configurator",  // Volume name without spaces to avoid hdiutil detach issues
+        // Keep name and volume title identical and space-free. A mismatch makes
+        // appdmg detach the wrong /Volumes path; spaces flake on CI hdiutil.
+        name: "INAV-Configurator",
+        title: "INAV-Configurator",
         background: "./assets/osx/dmg-background.png",
         icon: "./images/inav.icns"
       }

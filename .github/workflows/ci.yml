@@ -233,12 +233,24 @@ jobs:
             echo "APPLE_API_KEY=$KEY_PATH" >> "$GITHUB_ENV"
             echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID" >> "$GITHUB_ENV"
             echo "APPLE_API_ISSUER=$APPLE_API_ISSUER" >> "$GITHUB_ENV"
-        - name: Build MacOS arm64
+        # Package (and notarize) separately from DMG/ZIP so a flaky hdiutil
+        # detach does not redo Apple's notarization queue.
+        - name: Package MacOS arm64
           env:
             NODE_OPTIONS: --max-old-space-size=4096
           run: |
-            yarn run make -- --arch="arm64"
+            yarn run package -- --arch="arm64"
             test -d "out/INAV Configurator-darwin-arm64/INAV Configurator.app"
+        - name: Make MacOS arm64 distributables
+          uses: nick-fields/retry@v3
+          with:
+            max_attempts: 3
+            retry_on: error
+            timeout_minutes: 20
+            command: |
+              sudo mdutil -a -i off || true
+              hdiutil detach "/Volumes/INAV-Configurator" -force 2>/dev/null || true
+              yarn run make -- --arch="arm64" --skip-package
         - name: Verify signing and notarization
           if: github.event_name != 'pull_request'
           env:
@@ -362,12 +374,24 @@ jobs:
             echo "APPLE_API_KEY=$KEY_PATH" >> "$GITHUB_ENV"
             echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID" >> "$GITHUB_ENV"
             echo "APPLE_API_ISSUER=$APPLE_API_ISSUER" >> "$GITHUB_ENV"
-        - name: Build MacOS x64
+        # Package (and notarize) separately from DMG/ZIP so a flaky hdiutil
+        # detach does not redo Apple's notarization queue.
+        - name: Package MacOS x64
           env:
             NODE_OPTIONS: --max-old-space-size=4096
           run: |
-            yarn run make -- --arch="x64"
+            yarn run package -- --arch="x64"
             test -d "out/INAV Configurator-darwin-x64/INAV Configurator.app"
+        - name: Make MacOS x64 distributables
+          uses: nick-fields/retry@v3
+          with:
+            max_attempts: 3
+            retry_on: error
+            timeout_minutes: 20
+            command: |
+              sudo mdutil -a -i off || true
+              hdiutil detach "/Volumes/INAV-Configurator" -force 2>/dev/null || true
+              yarn run make -- --arch="x64" --skip-package
         - name: Verify signing and notarization
           if: github.event_name != 'pull_request'
           env:
