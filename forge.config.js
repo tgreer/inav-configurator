@@ -13,13 +13,8 @@ const pruneSitlBinaries = (stagingPath, electronVersion, platform, arch, done) =
     let sitlPath;
 
     if (platform === 'darwin') {
-      // macOS app bundle structure: <stagingPath>/<AppName>.app/Contents/Resources/sitl
-      const appBundles = fs.readdirSync(stagingPath).filter(f => f.endsWith('.app'));
-      if (appBundles.length === 0) {
-        console.log(`pruneSitlBinaries: No .app bundle found in ${stagingPath}`);
-        return done();
-      }
-      sitlPath = path.join(stagingPath, appBundles[0], 'Contents', 'Resources', 'sitl');
+      // afterCopyExtraResources receives the .app bundle as stagingPath.
+      sitlPath = path.join(stagingPath, 'Contents', 'Resources', 'sitl');
     } else {
       // Windows/Linux: <stagingPath>/resources/sitl
       sitlPath = path.join(stagingPath, 'resources', 'sitl');
